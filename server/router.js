@@ -6,12 +6,14 @@ const router = (app) => {
   app.get('/page3', controllers.page3);
   app.get('/getName', controllers.getName);
   app.get('/findByName', controllers.searchName);
+  app.get('/findByNameDog', controllers.searchNameDog); // find dog by name
 
   app.get('/', controllers.index);
 
   app.get('/*', controllers.notFound);
 
   app.post('/setName', controllers.setName);
+  app.post('/setNameDog', controllers.setNameDog); // create a new doggo
 
   app.post('/updateLast', controllers.updateLast);
 };

@@ -2,6 +2,7 @@
 const models = require('../models');
 
 const Cat = models.Cat.CatModel;
+const Dog = models.Dog.DogModel;
 
 // default fake data so that we have something to work with until we make a real Cat
 const defaultData = {
@@ -58,6 +59,8 @@ const hostPage3 = (req, res) => {
 const getName = (req, res) => {
   res.json({ name: lastAdded.name });
 };
+
+//= === CAT ====
 
 const setName = (req, res) => {
   if (!req.body.firstname || !req.body.lastname || !req.body.beds) {
@@ -131,6 +134,77 @@ const updateLast = (req, res) => {
   return res;
 };
 
+//= === DOG ====
+
+const setNameDog = (req, res) => {
+  if (!req.body.name || !req.body.breed || !req.body.age) {
+    return res.status(400).json({ error: 'name, breed, and age are all required' });
+  }
+
+  const dogData = {
+    name: req.body.name,
+    breed: req.body.breed,
+    age: req.body.age,
+  };
+
+  // put data in mongo format
+  const newDog = new Dog(dogData);
+
+  console.dir(newDog);
+
+  const savePromise = newDog.save(); // async req to store in database
+  // on successful response from mongo
+  savePromise.then(() => {
+    // lastAdded = newCat;
+    res.json(dogData);
+  });
+  // on error adding to mongo
+  savePromise.catch((err) => {
+    res.status(500).json({ err });
+  });
+
+  return res;
+};
+
+const searchNameDog = (req, res) => {
+  if (!req.query.name) {
+    return res.status(400).json({ error: 'Name is required to perform a search' });
+  }
+
+  const callback = (err, doc) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+    // document does not exist
+    if (!doc) {
+      return res.status(200).json({ error: 'No dogs found!' });
+    }
+
+    //increase age by one
+    doc.age++;
+    const dogData = {
+      name: doc.name,
+      breed: doc.breed,
+      age: doc.age,
+    };
+
+    //save in the database with updated age
+    const savePromise = doc.save(); // async req to save in database
+    // on successful response from mongo
+    savePromise.then(() => {
+      res.json(dogData);
+    });
+    // on error adding to mongo
+    savePromise.catch((err) => {
+      res.status(500).json({ err });
+    });
+
+    return res;
+  };
+
+  return Dog.findByName(req.query.name, callback);
+};
+
 const notFound = (req, res) => {
   res.status(404).render('notFound', {
     page: req.url,
@@ -145,7 +219,9 @@ module.exports = {
   readCat,
   getName,
   setName,
+  setNameDog,
   updateLast,
   searchName,
+  searchNameDog,
   notFound,
 };
