@@ -25,6 +25,10 @@ const readAllCats = (req, res, callback) => {
   Cat.find(callback).lean(); // find all and trim to json
 };
 
+const readAllDogs = (req, res, callback) => {
+  Dog.find(callback).lean(); // find all and trim to json
+};
+
 const readCat = (req, res) => {
   const name1 = req.query.name;
   const callback = (err, doc) => {
@@ -54,6 +58,17 @@ const hostPage2 = (req, res) => {
 
 const hostPage3 = (req, res) => {
   res.render('page3');
+};
+
+const hostPage4 = (req, res) => {
+  const callback = (err, docs) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+    return res.render('page4', { dogs: docs });
+  };
+
+  readAllDogs(req, res, callback);
 };
 
 const getName = (req, res) => {
@@ -150,8 +165,6 @@ const setNameDog = (req, res) => {
   // put data in mongo format
   const newDog = new Dog(dogData);
 
-  console.dir(newDog);
-
   const savePromise = newDog.save(); // async req to store in database
   // on successful response from mongo
   savePromise.then(() => {
@@ -171,32 +184,33 @@ const searchNameDog = (req, res) => {
     return res.status(400).json({ error: 'Name is required to perform a search' });
   }
 
-  const callback = (err, doc) => {
-    if (err) {
-      return res.status(500).json({ err });
+  const callback = (searchErr, doc) => {
+    if (searchErr) {
+      return res.status(500).json({ searchErr });
     }
     // document does not exist
     if (!doc) {
       return res.status(200).json({ error: 'No dogs found!' });
     }
 
-    //increase age by one
-    doc.age++;
+    // increase age by one
+    const oldDog = doc;
+    oldDog.age++;
     const dogData = {
-      name: doc.name,
-      breed: doc.breed,
-      age: doc.age,
+      name: oldDog.name,
+      breed: oldDog.breed,
+      age: oldDog.age,
     };
 
-    //save in the database with updated age
+    // save in the database with updated age
     const savePromise = doc.save(); // async req to save in database
     // on successful response from mongo
     savePromise.then(() => {
       res.json(dogData);
     });
     // on error adding to mongo
-    savePromise.catch((err) => {
-      res.status(500).json({ err });
+    savePromise.catch((saveErr) => {
+      res.status(500).json({ saveErr });
     });
 
     return res;
@@ -216,6 +230,7 @@ module.exports = {
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   readCat,
   getName,
   setName,
